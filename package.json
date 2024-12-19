@@ -1,0 +1,26 @@
+{
+  "name": "functional",
+  "version": "1.0.0",
+  "description": "A collection of functional types and functions",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nathanstephenson/functional.git"
+  },
+  "author": "nathanstephenson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nathanstephenson/functional/issues"
+  },
+  "homepage": "https://github.com/nathanstephenson/functional#readme",
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
