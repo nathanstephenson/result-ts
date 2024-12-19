@@ -1,5 +1,5 @@
 {
-  "name": "functional",
+  "name": "@nathanstephenson/result-ts",
   "version": "1.0.0",
   "description": "A collection of functional types and functions",
   "main": "dist/index.js",
@@ -9,14 +9,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nathanstephenson/functional.git"
+    "url": "git+https://github.com/nathanstephenson/result-ts.git"
   },
   "author": "nathanstephenson",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nathanstephenson/functional/issues"
+    "url": "https://github.com/nathanstephenson/result-ts/issues"
   },
-  "homepage": "https://github.com/nathanstephenson/functional#readme",
+  "homepage": "https://github.com/nathanstephenson/result-ts#readme",
   "dependencies": {
     "zod": "^3.24.1"
   },
