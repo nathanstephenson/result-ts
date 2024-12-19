@@ -26,11 +26,13 @@ type ResultFunctions<T> = {
 
 export type Result<T> = SerializableResult<T> & ResultFunctions<T>
 
-type ErrorResult<T> = Extract<Result<T>, { status: "error" }>
-type SuccessResult<T> = Extract<Result<T>, { status: "success" }>
+export type ErrorResult<T> = Extract<Result<T>, { status: "error" }>
+export type ErrorSerializableResult<T> = Extract<SerializableResult<T>, { status: "error" }>
+export type SuccessResult<T> = Extract<Result<T>, { status: "success" }>
+export type SuccessSerializableResult<T> = Extract<SerializableResult<T>, { status: "success" }>
 
 export const error = <T>(message: string, e?: Error, errorType: ErrorType = "unexpected"): ErrorResult<T> => {
-    const obj: SerializableResult<T> = {
+    const obj: ErrorSerializableResult<T> = {
         status: "error",
         errorType,
         message,
@@ -47,7 +49,7 @@ export const userValidationError = <T>(message: string, e?: Error): ErrorResult<
 export const unauthorizedError = <T>(): ErrorResult<T> => error("Unauthorized", undefined, "unauthorized")
 
 export const success = <T>(data: T, message?: string): SuccessResult<T> => {
-    const obj: SerializableResult<T> = {
+    const obj: SuccessSerializableResult<T> = {
         status: "success",
         message,
         data
