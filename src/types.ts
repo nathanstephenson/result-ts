@@ -28,7 +28,7 @@ type ResultFunctions<T> = {
     flatMap: <TAfter>(fn: (value: T) => Result<TAfter>) => Result<TAfter>
     flatMapAsync: <TAfter>(fn: (value: T) => Promise<Result<TAfter>>) => Promise<Result<TAfter>>
     catch: (fn: (value: Extract<Result<T>, { type: "error" }>) => Result<T>) => Result<T>
-    fold: <TAfter>(foldFn: { onSuccess: (value: T) => TAfter; onError: (message: string, stackTrace?: string) => TAfter }) => TAfter
+    fold: <TAfter>(foldFn: { onSuccess: (value: T) => TAfter; onError: (error: ErrorSerializableResult<T>) => TAfter }) => TAfter
     serialize: () => SerializableResult<T>
 }
 
@@ -130,11 +130,11 @@ const fold = <TSuccess, TFinal>(
     result: SerializableResult<TSuccess>,
     foldFn: {
         onSuccess: (value: TSuccess) => TFinal
-        onError: (message: string, stackTrace?: string) => TFinal
+        onError: (err: ErrorSerializableResult<TSuccess>) => TFinal
     }
 ): TFinal => {
     if (result.status === "success") {
         return foldFn.onSuccess(result.data)
     }
-    return foldFn.onError(result.message, result.stackTrace)
+    return foldFn.onError(result)
 }
