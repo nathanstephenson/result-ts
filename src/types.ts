@@ -1,4 +1,12 @@
-type ErrorType = "unexpected" | "user-validation" | "unauthorized"
+type ErrorType = "unexpected" | "user-validation" | "unauthorized" | "not-found"
+
+export const statusFromErrorType: Record<ErrorType, number> = {
+    unexpected: 503,
+    "user-validation": 400,
+    unauthorized: 401,
+    "not-found": 404
+} as const
+
 export type SerializableResult<T> =
     | {
           status: "success"
@@ -10,7 +18,7 @@ export type SerializableResult<T> =
           status: "error"
           errorType: ErrorType
           message: string
-          error?: Error
+          stackTrace?: string
           requestId?: string
       }
 
@@ -20,7 +28,7 @@ type ResultFunctions<T> = {
     flatMap: <TAfter>(fn: (value: T) => Result<TAfter>) => Result<TAfter>
     flatMapAsync: <TAfter>(fn: (value: T) => Promise<Result<TAfter>>) => Promise<Result<TAfter>>
     catch: (fn: (value: Extract<Result<T>, { type: "error" }>) => Result<T>) => Result<T>
-    fold: <TAfter>(foldFn: { onSuccess: (value: T) => TAfter; onError: (message: string, error?: Error) => TAfter }) => TAfter
+    fold: <TAfter>(foldFn: { onSuccess: (value: T) => TAfter; onError: (message: string, stackTrace?: string) => TAfter }) => TAfter
     serialize: () => SerializableResult<T>
 }
 
@@ -31,12 +39,12 @@ export type ErrorSerializableResult<T> = Extract<SerializableResult<T>, { status
 export type SuccessResult<T> = Extract<Result<T>, { status: "success" }>
 export type SuccessSerializableResult<T> = Extract<SerializableResult<T>, { status: "success" }>
 
-export const error = <T>(message: string, e?: Error, errorType: ErrorType = "unexpected"): ErrorResult<T> => {
+export const error = <T>(message: string, stackTrace?: string, errorType: ErrorType = "unexpected"): ErrorResult<T> => {
     const obj: ErrorSerializableResult<T> = {
         status: "error",
         errorType,
         message,
-        error: e
+        stackTrace: stackTrace ?? new Error().stack
     }
     return {
         ...obj,
@@ -44,9 +52,11 @@ export const error = <T>(message: string, e?: Error, errorType: ErrorType = "une
     }
 }
 
-export const userValidationError = <T>(message: string, e?: Error): ErrorResult<T> => error(message, e, "user-validation")
+export const userValidationError = <T>(message: string, e?: Error): ErrorResult<T> => error(message, e?.stack, "user-validation")
 
 export const unauthorizedError = <T>(): ErrorResult<T> => error("Unauthorized", undefined, "unauthorized")
+
+export const notFoundError = <T>(subject: string): ErrorResult<T> => error(`${subject} not found`, undefined, "not-found")
 
 export const success = <T>(data: T, message?: string): SuccessResult<T> => {
     const obj: SuccessSerializableResult<T> = {
@@ -81,7 +91,7 @@ const map = <TBefore, TAfter>(result: SerializableResult<TBefore>, fn: (value: T
     if (result.status === "success") {
         return success(fn(result.data))
     }
-    return error(result.message, result.error)
+    return error(result.message, )
 }
 
 const mapAsync = async <TBefore, TAfter>(result: SerializableResult<TBefore>, fn: (value: TBefore) => Promise<TAfter>): Promise<Result<TAfter>> => {
@@ -89,21 +99,21 @@ const mapAsync = async <TBefore, TAfter>(result: SerializableResult<TBefore>, fn
         const res = await fn(result.data)
         return success(res)
     }
-    return Promise.resolve(error<TAfter>(result.message, result.error))
+    return Promise.resolve(error<TAfter>(result.message, result.stackTrace))
 }
 
 const flatMap = <TBefore, TAfter>(result: SerializableResult<TBefore>, fn: (value: TBefore) => Result<TAfter>): Result<TAfter> => {
     if (result.status === "success") {
         return fn(result.data)
     }
-    return error<TAfter>(result.message, result.error, result.errorType)
+    return error<TAfter>(result.message, result.stackTrace, result.errorType)
 }
 
 const flatMapAsync = <TBefore, TAfter>(result: SerializableResult<TBefore>, fn: (value: TBefore) => Promise<Result<TAfter>>): Promise<Result<TAfter>> => {
     if (result.status === "success") {
         return fn(result.data)
     }
-    return Promise.resolve(error<TAfter>(result.message, result.error, result.errorType))
+    return Promise.resolve(error<TAfter>(result.message, result.stackTrace, result.errorType))
 }
 
 const catchResult = <TBefore>(
@@ -111,7 +121,7 @@ const catchResult = <TBefore>(
     fn: (value: Extract<Result<TBefore>, { status: "error" }>) => Result<TBefore>
 ): Result<TBefore> => {
     if (result.status === "error") {
-        return fn(error(result.message, result.error, result.errorType))
+        return fn(error(result.message, result.stackTrace, result.errorType))
     }
     return success(result.data, result.message)
 }
@@ -120,11 +130,11 @@ const fold = <TSuccess, TFinal>(
     result: SerializableResult<TSuccess>,
     foldFn: {
         onSuccess: (value: TSuccess) => TFinal
-        onError: (message: string, error?: Error) => TFinal
+        onError: (message: string, stackTrace?: string) => TFinal
     }
 ): TFinal => {
     if (result.status === "success") {
         return foldFn.onSuccess(result.data)
     }
-    return foldFn.onError(result.message, result.error)
+    return foldFn.onError(result.message, result.stackTrace)
 }

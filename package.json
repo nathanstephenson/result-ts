@@ -1,6 +1,6 @@
 {
   "name": "@nathanstephenson/result-ts",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "A collection of functional types and functions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
