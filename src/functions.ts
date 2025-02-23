@@ -17,7 +17,7 @@ export const unwrap = <T>(result: SerializableResult<T> | undefined, defaultValu
     return result.data
 }
 
-export const tryCatch = <T>(fn: () => T, errorMessage?: string): SerializableResult<T> => {
+export const tryCatch = <T>(fn: () => T, errorMessage?: string): Result<T> => {
     const errMessage = errorMessage ?? "An error occurred"
     try {
         return success(fn())
@@ -29,7 +29,7 @@ export const tryCatch = <T>(fn: () => T, errorMessage?: string): SerializableRes
     }
 }
 
-export const tryCatchAsync = async <T>(fn: () => Promise<T>, errorMessage?: string): Promise<SerializableResult<T>> => {
+export const tryCatchAsync = async <T>(fn: () => Promise<T>, errorMessage?: string): Promise<Result<T>> => {
     const defaultErrorMessage = "An error occurred"
     try {
         return success(await fn())
@@ -41,14 +41,14 @@ export const tryCatchAsync = async <T>(fn: () => Promise<T>, errorMessage?: stri
     }
 }
 
-export const parseSchema = <T extends ZodSchema>(object: unknown, schema: T, errorMessage: string = "Failed to parse schema"): SerializableResult<z.infer<T>> =>
+export const parseSchema = <T extends ZodSchema>(object: unknown, schema: T, errorMessage: string = "Failed to parse schema"): Result<z.infer<T>> =>
     tryCatch(() => schema.parse(object), errorMessage)
 
-export const stringify = (data: unknown): SerializableResult<string> => tryCatch(() => JSON.stringify(data, null, 2))
+export const stringify = (data: unknown): Result<string> => tryCatch(() => JSON.stringify(data, null, 2))
 
-export const parse = (data: string): SerializableResult<unknown> => tryCatch(() => JSON.parse(data))
+export const parse = (data: string): Result<unknown> => tryCatch(() => JSON.parse(data))
 
-export const flattenErrors = <T>(results: SerializableResult<T>[]): SerializableResult<T[]> => {
+export const flattenErrors = <T>(results: SerializableResult<T>[]): Result<T[]> => {
     const errors = results.filter(result => result.status !== "success")
     if (errors.length > 0) {
         return error(
@@ -56,7 +56,7 @@ export const flattenErrors = <T>(results: SerializableResult<T>[]): Serializable
             errors.map(error => error.stackTrace ?? "No trace").join(";\n")
         )
     }
-    return success(results.map(result => (result.status === "success" ? result.data : undefined)).filter(exists))
+    return success(results.map(result => (result.status === "success" ? result.data : undefined)))
 }
 
 export const deserializeResult = <T>(result: SerializableResult<T>): Result<T> => {
